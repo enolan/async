@@ -478,9 +478,11 @@ link :: Async a -> IO ()
 link (Async _ w) = do
   me <- myThreadId
   void $ forkRepeat $ do
-     r <- atomically $ w
+     r <- atomically w
      case r of
-       Left e -> throwTo me e
+       Left e -> case fromException e of
+         Just ThreadKilled -> return ()
+         _                 -> throwTo me e
        _ -> return ()
 
 -- | Link two @Async@s together, such that if either raises an
